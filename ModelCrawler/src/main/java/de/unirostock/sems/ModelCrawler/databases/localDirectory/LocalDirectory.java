@@ -10,6 +10,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
+import java.net.URL;
+import java.net.URI;
+
+
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,9 +25,9 @@ import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
-import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
-import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb.WorkingDirConfig;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
+import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
+
 
 /**
  * @author tgeb
@@ -31,7 +36,7 @@ import de.unirostock.sems.bives.tools.DocumentClassifier;
 public class LocalDirectory extends ModelDatabase {
 	
 	
-	protected String rootDir;
+	protected URL rootDir;
 	protected boolean inverse;
 	protected File workingDir;
 	protected boolean enabled;
@@ -50,6 +55,21 @@ public class LocalDirectory extends ModelDatabase {
 	protected Set<String> fileExtensionBlacklist = new HashSet<String>();
 	
 
+	private static class WorkingDirConfig {
+		
+		private HashSet<String> knownReleases = new HashSet<String>();
+		
+		public HashSet<String> getKnownReleases() {
+			return knownReleases;
+		}
+
+		@SuppressWarnings("unused")
+		public void setKnownReleases(HashSet<String> knownReleases) {
+			this.knownReleases = knownReleases;
+		}
+		
+	}
+	
 	/* (non-Javadoc)
 	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#listModels()
 	 */
@@ -109,17 +129,25 @@ public class LocalDirectory extends ModelDatabase {
 		log.info("Start crawling the PMR2 Database by going throw the Mercurial Workspaces");
 		
 		
-
+		String filePath; //TODO get local File path
+		
 		// getting the current Date, for crawling TimeStamp
 		Date crawledDate = new Date();
+		String fileName = null;
 		
-
-		change = new BioModelsChange(repositoryUrl, filePath, release.getReleaseName(), release.getReleaseDate(), crawledDate);
-		change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
-		change.setModelType( CrawledModelRecord.TYPE_SBML );
-		change.setXmlFile( release.getModelPath(fileName) );
-		is new?
+		LocalDirectoryChange change = null;
+		LocalDirectoryRelease release = null;
+		
+		//is rootDir really an URL?
+		change = new LocalDirectoryChange(rootDir, filePath, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 				
+		change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB); //cant add new source to the crawledModel
+		change.setModelType( CrawledModelRecord.TYPE_SBML );//need another type, same as above... 
+		change.setXmlFile( release.getModelPath(fileName) );
+		
+		////////////////////////is new?
+		LocalDirectoryChangeSet changeSet = null;
+		LocalDirectoryChange latest = ((LocalDirectoryChange) changeSet.getLatestChange());		
 		change.addParent( latest.getFileId(), latest.getVersionId() );
 		URI modelUri = modelStorage.storeModel(change);
 		change.setXmldoc( modelUri.toString() );
