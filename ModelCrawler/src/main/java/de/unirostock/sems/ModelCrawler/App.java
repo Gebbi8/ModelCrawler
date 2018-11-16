@@ -17,6 +17,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
+import de.unirostock.sems.ModelCrawler.databases.localDirectory.LocalDirectory;
 import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 import de.unirostock.sems.ModelCrawler.storage.FileStorage;
@@ -72,6 +73,8 @@ public class App {
 			
 			config.getDatabases().add( new BioModelsDb() );
 			config.getDatabases().add( new PmrDb() );
+			//added for LD
+			config.getDatabases().add( new LocalDirectory() );
 			config.setStorage( new FileStorage() );
 			
 			try {

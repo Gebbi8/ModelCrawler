@@ -16,6 +16,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -53,7 +54,7 @@ public class LocalDirectory extends ModelDatabase {
 	@JsonIgnore
 	private final Log log = LogFactory.getLog( LocalDirectory.class );
 	@JsonIgnore
-	private final URL repoUrl;
+	private URL repoUrl;
 	
 	@JsonIgnore
 	protected DocumentClassifier classifier = null;
@@ -124,7 +125,13 @@ public class LocalDirectory extends ModelDatabase {
 		// TODO Auto-generated method stub
 		
 		File rootDir = new File (root);
-		repoUrl = rootDir.toURL();
+		try {
+			repoUrl = rootDir.toURI().toURL();
+		} catch (MalformedURLException e2) {
+			// TODO Auto-generated catch block
+			log.error("Not able to do Morre");
+			e2.printStackTrace();
+		}
 		
 		
 		if( morreClient != null || Config.getWorkingMode() != WorkingMode.NO_MORRE ) {

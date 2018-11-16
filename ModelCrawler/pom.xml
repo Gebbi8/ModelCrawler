@@ -3,7 +3,7 @@
 
 	<groupId>de.uni-rostock.sbi</groupId>
 	<artifactId>ModelCrawler</artifactId>
-	<version>0.2.5</version>
+	<version>0.3.0</version>
 	<packaging>jar</packaging>
 	<description>Command line tool to crawl all model versions from database like BioModels Database and PMR2</description>
 	<name>ModelCrawler</name>
@@ -133,7 +133,7 @@
 		<dependency>
 			<groupId>de.uni-rostock.sbi</groupId>
 			<artifactId>morre.client</artifactId>
-			<version>0.0.9</version>
+			<version>0.0.12</version>
 		</dependency>
 
 		<!-- Jackson -->

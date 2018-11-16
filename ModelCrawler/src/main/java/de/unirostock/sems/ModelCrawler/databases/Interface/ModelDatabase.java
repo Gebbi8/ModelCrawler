@@ -25,6 +25,7 @@ import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
+import de.unirostock.sems.ModelCrawler.databases.localDirectory.LocalDirectory;
 import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 
@@ -35,6 +36,7 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 		property = "type" )
 @JsonSubTypes({
 	@Type( value = ModelDatabase.class, name = ModelDatabase.DatabaseTypes.NONE ),
+	@Type( value = LocalDirectory.class, name = ModelDatabase.DatabaseTypes.LD ),
 	@Type( value = BioModelsDb.class, name = ModelDatabase.DatabaseTypes.BMDB ),
 	@Type( value = PmrDb.class, name = ModelDatabase.DatabaseTypes.PMR2 )
 })
@@ -46,6 +48,7 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 
 	public abstract class DatabaseTypes {
 		public static final String NONE = "";
+		public static final String LD = "LD";
 		public static final String BMDB = "BMDB";
 		public static final String PMR2 = "PMR2";
 	}
