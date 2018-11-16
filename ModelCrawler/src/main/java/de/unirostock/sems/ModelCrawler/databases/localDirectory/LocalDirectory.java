@@ -11,13 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Date;
+import java.util.HashMap;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.MessageFormat;
 import java.net.URI;
-
-
+import java.net.URISyntaxException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.jena.sparql.function.library.leviathan.root;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -25,8 +29,10 @@ import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
+import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
+import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 
 
 /**
@@ -36,14 +42,18 @@ import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 public class LocalDirectory extends ModelDatabase {
 	
 	
-	protected URL rootDir;
+	protected String root;
 	protected boolean inverse;
 	protected File workingDir;
 	protected boolean enabled;
 	protected int limit;
 	
+	protected ModelStorage modelStorage = null;
+
 	@JsonIgnore
 	private final Log log = LogFactory.getLog( LocalDirectory.class );
+	@JsonIgnore
+	private final URL repoUrl;
 	
 	@JsonIgnore
 	protected DocumentClassifier classifier = null;
@@ -113,6 +123,10 @@ public class LocalDirectory extends ModelDatabase {
 	public Map<String, ChangeSet> call() {
 		// TODO Auto-generated method stub
 		
+		File rootDir = new File (root);
+		repoUrl = rootDir.toURL();
+		
+		
 		if( morreClient != null || Config.getWorkingMode() != WorkingMode.NO_MORRE ) {
 			log.error("Not able to do Morre");
 			throw new IllegalArgumentException("Not able to do Morre");
@@ -126,33 +140,116 @@ public class LocalDirectory extends ModelDatabase {
 
 		// Prepare WorkingDir 
 		init();
-		log.info("Start crawling the PMR2 Database by going throw the Mercurial Workspaces");
+		log.info("Start crawling the local repo by going throw the directory " + rootDir);
 		
-		
-		String filePath; //TODO get local File path
-		
-		// getting the current Date, for crawling TimeStamp
 		Date crawledDate = new Date();
-		String fileName = null;
 		
-		LocalDirectoryChange change = null;
-		LocalDirectoryRelease release = null;
+		Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();;
 		
-		//is rootDir really an URL?
-		change = new LocalDirectoryChange(rootDir, filePath, release.getReleaseName(), release.getReleaseDate(), crawledDate);
-				
-		change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB); //cant add new source to the crawledModel
-		change.setModelType( CrawledModelRecord.TYPE_SBML );//need another type, same as above... 
-		change.setXmlFile( release.getModelPath(fileName) );
 		
-		////////////////////////is new?
-		LocalDirectoryChangeSet changeSet = null;
-		LocalDirectoryChange latest = ((LocalDirectoryChange) changeSet.getLatestChange());		
-		change.addParent( latest.getFileId(), latest.getVersionId() );
-		URI modelUri = modelStorage.storeModel(change);
-		change.setXmldoc( modelUri.toString() );
+		for (File top : rootDir.listFiles()) {
+		
+			//File must be folder
+			if(!top.isDirectory()) {
+				continue;
+			}
+			
+			for (File modelVersion : top.listFiles()) {
+				if(modelVersion.isDirectory()) {
+					
+					// TODO
+					log.error("Decomposed models are not supported, yet.");
+					throw new IllegalArgumentException("Decomposed models are not supported, yet."); 
+					
+					
+					
+				} else {
+					//not directory
+					// check if file is SBML or CellML else skip file
+					int type = classifier.classify(modelVersion);
+					if( (type & DocumentClassifier.XML) == 0 || ((type & DocumentClassifier.SBML) == 0 && (type & DocumentClassifier.CELLML) == 0) )
+						continue;
+					
+					//get relative file path from absolute path and root directory path
+					String filePath = rootDir.toURI().relativize(modelVersion.toURI()).getPath();
+					
+					//get changeSet from changeSetMap by path
+					LocalDirectoryChangeSet changeSet = (LocalDirectoryChangeSet) changeSetMap.get(filePath);
+					//if no changeSet was found create new one and add it to changeSetMap
+					if (changeSet == null) {
+						changeSet = new LocalDirectoryChangeSet(repoUrl, filePath);
+						changeSetMap.put(filePath, changeSet);
+					}
+					
+					
+		
+		
+					try {
+						
+						String modelId;
+						String versionId;
+						
+						if(inverse) {
+							modelId = modelVersion.getName();
+							versionId = top.getName();
+						} else {
+							modelId = top.getName();
+							versionId = modelVersion.getName();
+						}
+						
+						Date versionDate = new Date (modelVersion.lastModified());//Files.readAttributes(modelVersion.toPath(), BasicFileAttributes.class).creationTime();
+						
+		
+						
+						
+						LocalDirectoryChange change = new LocalDirectoryChange(repoUrl, modelId, versionId, versionDate, crawledDate);
+						
+						
 
-		return null;
+						change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_LOCAL_DIR); //cant add new source to the crawledModel
+						
+						
+						//set model type according to classiefier
+						if ((type & DocumentClassifier.SBML) > 0) {
+							change.setModelType( CrawledModelRecord.TYPE_SBML );
+						} else if ((type & DocumentClassifier.CELLML) > 0) {
+							change.setModelType( CrawledModelRecord.TYPE_CELLML );
+						} else {
+							if( log.isInfoEnabled() )
+								log.info(MessageFormat.format("file is not a valid model document {0} ", modelVersion));
+							continue;
+						}
+						
+						 //set path to file by absolute path
+						change.setXmlFile( modelVersion );
+						
+						// puts change in model
+						try {
+							URI modelUri = modelStorage.storeModel(change);
+							change.setXmldoc( modelUri.toString() );
+						} catch (StorageException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						
+					} catch (URISyntaxException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					
+					
+				}
+			}
+			
+			
+			
+			
+		
+
+		
+		}
+		return changeSetMap;
 	}
 	
 	protected void init() {

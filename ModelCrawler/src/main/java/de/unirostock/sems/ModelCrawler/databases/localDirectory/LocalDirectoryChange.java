@@ -20,6 +20,16 @@ public class LocalDirectoryChange extends Change {
 	
 	public final static String META_HASH = "filehash";
 	
+	
+	/**
+	 * 
+	 * @param localRepository path to the root of directory hosting the files
+	 * @param filePath relative (TODO relative?) path to the file in the repo
+	 * @param versionId identifier for the version of this model
+	 * @param versionDate date of the version
+	 * @param crawledDate when obtained?
+	 * @throws URISyntaxException
+	 */
 	public LocalDirectoryChange( URL localRepository, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
 		super( localRepository, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath)), versionId, versionDate, crawledDate );
 		//super( repositoryUrl, filePath, versionId, versionDate, crawledDate );

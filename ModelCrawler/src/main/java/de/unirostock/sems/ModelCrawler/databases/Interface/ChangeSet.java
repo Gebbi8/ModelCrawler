@@ -11,11 +11,22 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+
+/**
+ * 
+ * set of changes for a specific model
+ * 
+ * @author tgeb
+ *
+ */
 public abstract class ChangeSet {
 	
 	@JsonIgnore
 	private final Log log = LogFactory.getLog( ChangeSet.class );
 	
+	/**
+	 * identifier from repo url and relative file path in repo
+	 */
 	protected String fileId;
 	protected NavigableSet<Change> changes;
 	

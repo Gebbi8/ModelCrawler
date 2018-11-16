@@ -6,7 +6,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 
 public class LocalDirectoryChangeSet extends ChangeSet {
 	
-	public LocalDirectoryChangeSet(URL repositoryUrl, String filePath) {
+	public LocalDirectoryChangeSet(URL repositoryUrl, String filePath) { //localRepoDir instead of repositoryUrl
 		super(repositoryUrl, filePath);
 	}
 	

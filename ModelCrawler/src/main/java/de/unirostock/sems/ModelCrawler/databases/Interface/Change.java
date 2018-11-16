@@ -11,6 +11,15 @@ import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 
+
+/**
+ * specific change on a model file
+ * 
+ * basically representing a model version...?
+ * 
+ * @author tgeb
+ *
+ */
 public abstract class Change extends CrawledModelRecord implements Comparable<Change> {
 	
 	private static final long serialVersionUID = 3880353134783045794L;
@@ -27,6 +36,15 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	
 
 	//public Change( URL repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+	/**
+	 * 
+	 * @param repositoryUrl 
+	 * @param filePath 
+	 * @param versionId 
+	 * @param versionDate 
+	 * @param crawledDate 
+	 * @throws URISyntaxException
+	 */
 	public Change( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
 		
 		//super( generateFileId(repositoryUrl, fileName), versionId, versionDate, crawledDate );
