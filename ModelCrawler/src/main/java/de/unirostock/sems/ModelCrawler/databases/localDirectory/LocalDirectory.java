@@ -48,9 +48,37 @@ public class LocalDirectory extends ModelDatabase {
 	protected File workingDir;
 	protected boolean enabled;
 	protected int limit;
+	protected URL repoListUrl;
+	
+	//protected boolean inverse = true;
 	
 	protected ModelStorage modelStorage = null;
 
+	
+	public boolean getInverse() {
+		return inverse;
+	}
+
+	public void setRoot (String root) {
+		this.root = root;
+	}
+	
+	public String getRoot() {
+		return root;
+	}
+
+	public void setInverse (boolean inverse) {
+		this.inverse = inverse;
+	}
+	
+	public URL getRepoListUrl() {
+		return repoListUrl;
+	}
+
+	public void setRepoListUrl(URL repoListUrl) {
+		this.repoListUrl = repoListUrl;
+	}
+	
 	@JsonIgnore
 	private final Log log = LogFactory.getLog( LocalDirectory.class );
 	@JsonIgnore
@@ -130,6 +158,7 @@ public class LocalDirectory extends ModelDatabase {
 		} catch (MalformedURLException e2) {
 			// TODO Auto-generated catch block
 			log.error("Not able to do Morre");
+;
 			e2.printStackTrace();
 		}
 		
