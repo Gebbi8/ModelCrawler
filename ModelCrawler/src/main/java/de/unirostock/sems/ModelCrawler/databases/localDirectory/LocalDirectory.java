@@ -190,7 +190,6 @@ public class LocalDirectory extends ModelDatabase {
 		init();
 		log.info("Start crawling the local repo by going throw the directory " + rootDir);
 		
-		Date crawledDate = new Date();
 	
 		
 	//	System.out.println(rootDir);
@@ -198,152 +197,112 @@ public class LocalDirectory extends ModelDatabase {
 
 
 		// Create a Pattern object
-		Pattern regex = Pattern.compile(pattern);
+		Pattern regex = Pattern.compile(fileStructure);
 		
 		
-		findModels(regex, rootDir);
+		findModels(regex, rootDir, rootDir);
 		
-	
-		
-		
-		for (File top : rootDir.listFiles()) {
-			//File must be folder
-			if(!top.isDirectory()) {
-				continue;
-			}
-			
-			for(File sbmlDir : top.listFiles()) {
-				if(!sbmlDir.isDirectory() || !Objects.equals(sbmlDir.getName(), "SBML")) continue;
-				
-				
-			
-			
-				for (File modelVersion : sbmlDir.listFiles()) {
-					if(modelVersion.isDirectory()) {
-						
-						// TODO
-						log.error("Decomposed models are not supported, yet.");
-						throw new IllegalArgumentException("Decomposed models are not supported, yet."); 
-						
-						
-						
-					} else {
-						//not directory
-						// check if file is SBML or CellML else skip file
-						int type = classifier.classify(modelVersion);
-
-						
-						if( (type & DocumentClassifier.XML) == 0 || ((type & DocumentClassifier.SBML) == 0 && (type & DocumentClassifier.CELLML) == 0) )
-							continue;
-						
-						//get relative file path from absolute path and root directory path
-						String filePath = rootDir.toURI().relativize(modelVersion.toURI()).getPath();
-						//get changeSet from changeSetMap by path
-						LocalDirectoryChangeSet changeSet = (LocalDirectoryChangeSet) changeSetMap.get(filePath);
-						//if no changeSet was found create new one and add it to changeSetMap
-						if (changeSet == null) {
-							changeSet = new LocalDirectoryChangeSet(repoUrl, filePath);
-							changeSetMap.put(filePath, changeSet);
-						}
-						
-						
-			
-			
-						try {
-							
-							String modelId;
-							String versionId;	
-							
-							if(inverse) {
-								modelId = modelVersion.getName();
-								versionId = top.getName();
-							} else {
-								modelId = top.getName();
-								versionId = modelVersion.getName();
-							}
-							
-							Date versionDate = new Date (modelVersion.lastModified());//Files.readAttributes(modelVersion.toPath(), BasicFileAttributes.class).creationTime();
-							
-			
-							System.out.println("modelId:" + modelId);
-							
-							LocalDirectoryChange change = new LocalDirectoryChange(repoUrl, versionId, modelId, versionDate, crawledDate);
-							
-							
-	
-							change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_LOCAL_DIR); //cant add new source to the crawledModel
-							
-							
-							//set model type according to classiefier
-							if ((type & DocumentClassifier.SBML) > 0) {
-								change.setModelType( CrawledModelRecord.TYPE_SBML );
-							} else if ((type & DocumentClassifier.CELLML) > 0) {
-								change.setModelType( CrawledModelRecord.TYPE_CELLML );
-							} else {
-								if( log.isInfoEnabled() )
-									log.info(MessageFormat.format("file is not a valid model document {0} ", modelVersion));
-								continue;
-							}
-							
-							 //set path to file by absolute path
-							change.setXmlFile( modelVersion );
-							
-							// puts change in model
-							try {
-								URI modelUri = modelStorage.storeModel(change);
-								change.setXmldoc( modelUri.toString() );
-							} catch (StorageException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							
-							
-						} catch (URISyntaxException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-						
-						
-					}
-				}
-			
-			}
-			
-			
-		
-
-		
-		}
 		return changeSetMap;
 		
 
 	}
 	
-	protected boolean findModels(Pattern regex, File dir ) {
-	//	System.out.println(pattern);
-		System.out.println(dir);
-		
-		
-
+	protected boolean findModels(Pattern regex, File dir, File rootDir) {
 		
 		for(File i : dir.listFiles()) {
 			// Now create matcher object.
 			Matcher m = regex.matcher(i.getAbsolutePath());
 			if (m.find( )) {
-				System.out.println("Found value: " + m.group(0) );
-				System.out.println("Found value: " + m.group(1) );
-				System.out.println("Found value: " + m.group(2) );
+				
+				produceChange(rootDir, i, m.group(1), m.group(2) );
 			}else {
 
-				System.out.println("NO MATCH");
-				if(dir.isDirectory())
-					findModels(regex, i);
+				if(i.isDirectory())
+					findModels(regex, i, rootDir);
 			}
 		}
 
 
 		return false;   		
 	}
+	
+	protected boolean produceChange(File rootDir, File modelVersion, String topId, String btmId) {
+		
+		LocalDirectoryChange change = null;
+		
+		int type = classifier.classify(modelVersion);
+
+		
+		if( (type & DocumentClassifier.XML) == 0 || ((type & DocumentClassifier.SBML) == 0 && (type & DocumentClassifier.CELLML) == 0) )
+			return false;
+		
+		//get relative file path from absolute path and root directory path
+		String filePath = rootDir.toURI().relativize(modelVersion.toURI()).getPath();
+		//get changeSet from changeSetMap by path
+		LocalDirectoryChangeSet changeSet = (LocalDirectoryChangeSet) changeSetMap.get(filePath);
+		//if no changeSet was found create new one and add it to changeSetMap
+		if (changeSet == null) {
+			changeSet = new LocalDirectoryChangeSet(repoUrl, filePath);
+			changeSetMap.put(filePath, changeSet);
+		}
+		
+		
+
+
+		try {
+			
+			String modelId;
+			String versionId;	
+			
+			Date crawledDate = new Date();
+			
+			if(inverse) {
+				modelId = btmId;//modelVersion.getName();
+				versionId = topId;//model.getName();
+			} else {
+				modelId = topId;//model.getName();
+				versionId = btmId;//modelVersion.getName();
+			}
+			
+			Date versionDate = new Date (modelVersion.lastModified());//Files.readAttributes(modelVersion.toPath(), BasicFileAttributes.class).creationTime();
+			
+			change = new LocalDirectoryChange(repoUrl, versionId, modelId, versionDate, crawledDate);
+			
+
+			change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_LOCAL_DIR); //cant add new source to the crawledModel
+			
+			
+			//set model type according to classiefier
+			if ((type & DocumentClassifier.SBML) > 0) {
+				change.setModelType( CrawledModelRecord.TYPE_SBML );
+			} else if ((type & DocumentClassifier.CELLML) > 0) {
+				change.setModelType( CrawledModelRecord.TYPE_CELLML );
+			} else {
+				if( log.isInfoEnabled() )
+					log.info(MessageFormat.format("file is not a valid model document {0} ", modelVersion));
+				return false;
+			}
+			
+			 //set path to file by absolute path
+			change.setXmlFile( modelVersion );
+			
+			// puts change in model
+			try {
+				URI modelUri = modelStorage.storeModel(change);
+				change.setXmldoc( modelUri.toString() );
+			} catch (StorageException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+		} catch (URISyntaxException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return true;
+}
 	
 	protected void init() {
 

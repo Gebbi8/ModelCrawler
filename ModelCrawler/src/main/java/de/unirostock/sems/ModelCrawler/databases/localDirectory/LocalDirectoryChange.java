@@ -31,7 +31,8 @@ public class LocalDirectoryChange extends Change {
 	 * @throws URISyntaxException
 	 */
 	public LocalDirectoryChange( URL localRepository, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
-		super( localRepository, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath)), versionId, versionDate, crawledDate );
+		super( localRepository, filePath, versionId, versionDate, crawledDate );
+//		super( localRepository, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath)), versionId, versionDate, crawledDate );
 		//super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
 	}
 	
