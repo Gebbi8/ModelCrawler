@@ -124,12 +124,26 @@ public class App {
 		int changeSetCount = 0;
 		int modelCount = 0;
 		
+		int changeSetCountNoMorre = 0;
+		int modelCountNoMorre = 0;
+		
 		// after-crawling operations for mode TEST
 		if( Config.getWorkingMode() == WorkingMode.TEST ) {
 			log.info("Do not push ChangeSets to morre or store them in test-mode");
 		}
 		else if( Config.getWorkingMode() == WorkingMode.NO_MORRE ) {
+			
 			log.info("Do not push ChangeSets to morre in NO_MORRE mode.");
+	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
+	    	while( changesSetIterator.hasNext() ) {
+	    		// ... and process them
+	    		int count = processChangeSet( changesSetIterator.next() );
+	    		System.out.println(count);
+	    		System.out.println("test");
+	    		changeSetCountNoMorre++;
+	    		modelCountNoMorre = modelCountNoMorre + count;
+	    	}
+			
 		}
 		else {
 			
@@ -149,6 +163,7 @@ public class App {
 
 		log.info("finished crawling");
 		log.info( MessageFormat.format("pushed {0} changesets with {1} models to morre, {2,number,##.#} models per changeset", changeSetCount, modelCount, (double) (changeSetCount > 0 ? modelCount/changeSetCount : 0.0) ));
+		log.info( MessageFormat.format("found {0} changesets with {1} models, {2,number,##.#} models per changeset", changeSetCountNoMorre, modelCountNoMorre, (double) (changeSetCountNoMorre > 0 ? modelCountNoMorre/changeSetCountNoMorre : 0.0) ));
 	}
 	
 	

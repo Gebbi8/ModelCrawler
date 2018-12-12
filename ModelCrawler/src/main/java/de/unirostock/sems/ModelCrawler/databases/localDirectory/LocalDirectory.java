@@ -5,6 +5,7 @@ package de.unirostock.sems.ModelCrawler.databases.localDirectory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -55,8 +56,8 @@ public class LocalDirectory extends ModelDatabase {
 	protected int limit;
 	protected URL repoListUrl;
 	protected String fileStructure;
+	protected int changecount;
 	
-
 	public String getFileStructure() {
 		return fileStructure;
 	}
@@ -126,8 +127,7 @@ public class LocalDirectory extends ModelDatabase {
 	 */
 	@Override
 	public List<String> listModels() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<String>( changeSetMap.keySet() );
 	}
 
 	/* (non-Javadoc)
@@ -144,8 +144,7 @@ public class LocalDirectory extends ModelDatabase {
 	 */
 	@Override
 	public ChangeSet getModelChanges(String fileId) {
-		// TODO Auto-generated method stub
-		return null;
+		return changeSetMap.get(fileId);
 	}
 
 	/* (non-Javadoc)
@@ -169,7 +168,7 @@ public class LocalDirectory extends ModelDatabase {
 			repoUrl = rootDir.toURI().toURL();
 		} catch (MalformedURLException e2) {
 			// TODO Auto-generated catch block
-			log.error("Not able to do Morre");
+			log.error("Not able to get repository URL");
 ;
 			e2.printStackTrace();
 		}
@@ -214,7 +213,7 @@ public class LocalDirectory extends ModelDatabase {
 			Matcher m = regex.matcher(i.getAbsolutePath());
 			if (m.find( )) {
 				
-				produceChange(rootDir, i, m.group(1), m.group(2) );
+				if(produceChange(rootDir, i, m.group(1), m.group(2) )) changecount++;
 			}else {
 
 				if(i.isDirectory())
@@ -241,10 +240,7 @@ public class LocalDirectory extends ModelDatabase {
 		//get changeSet from changeSetMap by path
 		LocalDirectoryChangeSet changeSet = (LocalDirectoryChangeSet) changeSetMap.get(filePath);
 		//if no changeSet was found create new one and add it to changeSetMap
-		if (changeSet == null) {
-			changeSet = new LocalDirectoryChangeSet(repoUrl, filePath);
-			changeSetMap.put(filePath, changeSet);
-		}
+		
 		
 		
 
@@ -264,12 +260,21 @@ public class LocalDirectory extends ModelDatabase {
 				versionId = btmId;//modelVersion.getName();
 			}
 			
+			if (changeSet == null) {
+				changeSet = new LocalDirectoryChangeSet(repoUrl, filePath);
+				changeSetMap.put(modelId, changeSet);
+			} else {
+				log.debug("changeSet already in the map");
+			}
+			
+			
+			// last modified for downloaded files probably the same???
 			Date versionDate = new Date (modelVersion.lastModified());//Files.readAttributes(modelVersion.toPath(), BasicFileAttributes.class).creationTime();
 			
-			change = new LocalDirectoryChange(repoUrl, versionId, modelId, versionDate, crawledDate);
+			change = new LocalDirectoryChange(repoUrl, modelId, versionId, versionDate, crawledDate);
 			
 
-			change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_LOCAL_DIR); //cant add new source to the crawledModel
+			change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_LOCAL_DIR);
 			
 			
 			//set model type according to classiefier
@@ -288,10 +293,15 @@ public class LocalDirectory extends ModelDatabase {
 			
 			// puts change in model
 			try {
+				System.out.println(change);
+				//change.setXmlFile(fileLocation);
 				URI modelUri = modelStorage.storeModel(change);
 				change.setXmldoc( modelUri.toString() );
+				System.out.println(modelUri);
+			//	System.exit(1);
 			} catch (StorageException e) {
 				// TODO Auto-generated catch block
+				log.error("could not store model");
 				e.printStackTrace();
 			}
 			

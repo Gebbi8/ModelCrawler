@@ -128,6 +128,13 @@ public abstract class FileBasedStorage extends ModelStorage {
 		try {
 			// create outer Path
 			makeDirs( outerPath );
+			System.out.println("-----------------");
+			System.out.println(outerPath);
+			System.out.println(modelChange.getVersionId());
+			System.out.println(innerPath);
+			System.out.println(fileName);
+			System.out.println(modelChange);
+			System.out.println("---------------");
 			VersionInfo info = getVersionInfo(outerPath);
 			
 			// create directory for version

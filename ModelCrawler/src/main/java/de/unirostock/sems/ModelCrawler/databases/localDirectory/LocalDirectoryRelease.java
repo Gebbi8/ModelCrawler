@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.Map;
 
-//Do we jave releases? probably different  version folders
+//Do we have releases? probably different  version folders
 
 public class LocalDirectoryRelease {
 	

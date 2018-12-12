@@ -49,6 +49,9 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 		
 		//super( generateFileId(repositoryUrl, fileName), versionId, versionDate, crawledDate );
     super( generateFileId(repositoryUrl, filePath), versionId, versionDate, crawledDate );
+System.out.println(filePath);
+System.out.println(repositoryUrl);
+System.out.println("above");
     //super( generateFileId(repositoryUrl, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath))), versionId, versionDate, crawledDate );
 		//super( generateFileId(repositoryUrl, filePath), versionId, versionDate, crawledDate );
 	        
